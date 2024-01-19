@@ -8,6 +8,7 @@ service Calculator {
     rpc Add (AddRequest) returns (AddResponse);
     rpc StreamAdd(stream StreamNumList) returns (AddResponse);
     rpc AddStream(NumList) returns (stream StreamAddResponse);
+    rpc Bi_Add(stream StreamNumList) returns (stream StreamAddResponse);
 }
 
 // Add

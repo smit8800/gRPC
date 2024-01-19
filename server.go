@@ -74,7 +74,34 @@ func (s *calculatorServer) AddStream(req *proto.NumList, stream pb.Calculator_Ad
 	return nil
 }
 
-// ...
+func (s *calculatorServer) Bi_Add(stream pb.Calculator_Bi_AddServer) error {
+	l := log.New(os.Stdout, "grpc-Server --> Bi ", log.LstdFlags)
+	_sum := int32(0)
+
+	for {
+		// reciever: stream data
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		l.Printf("Recieved: %d", req.Nums)
+
+		// sending: on stream
+		_sum += int32(req.Nums)
+		res := &pb.StreamAddResponse{
+			Result: int32(_sum),
+		}
+		err = stream.Send(res)
+		if err != nil {
+			l.Fatalf("Error in Sending")
+			return err
+		}
+		l.Printf("Sending: %d", _sum)
+	}
+}
 
 func main() {
 	// Create a logger for the server.

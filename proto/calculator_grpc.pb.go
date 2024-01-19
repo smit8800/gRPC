@@ -24,6 +24,7 @@ const (
 	Calculator_Add_FullMethodName       = "/calculator.Calculator/Add"
 	Calculator_StreamAdd_FullMethodName = "/calculator.Calculator/StreamAdd"
 	Calculator_AddStream_FullMethodName = "/calculator.Calculator/AddStream"
+	Calculator_Bi_Add_FullMethodName    = "/calculator.Calculator/Bi_Add"
 )
 
 // CalculatorClient is the client API for Calculator service.
@@ -33,6 +34,7 @@ type CalculatorClient interface {
 	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	StreamAdd(ctx context.Context, opts ...grpc.CallOption) (Calculator_StreamAddClient, error)
 	AddStream(ctx context.Context, in *NumList, opts ...grpc.CallOption) (Calculator_AddStreamClient, error)
+	Bi_Add(ctx context.Context, opts ...grpc.CallOption) (Calculator_Bi_AddClient, error)
 }
 
 type calculatorClient struct {
@@ -118,6 +120,37 @@ func (x *calculatorAddStreamClient) Recv() (*StreamAddResponse, error) {
 	return m, nil
 }
 
+func (c *calculatorClient) Bi_Add(ctx context.Context, opts ...grpc.CallOption) (Calculator_Bi_AddClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Calculator_ServiceDesc.Streams[2], Calculator_Bi_Add_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calculatorBi_AddClient{stream}
+	return x, nil
+}
+
+type Calculator_Bi_AddClient interface {
+	Send(*StreamNumList) error
+	Recv() (*StreamAddResponse, error)
+	grpc.ClientStream
+}
+
+type calculatorBi_AddClient struct {
+	grpc.ClientStream
+}
+
+func (x *calculatorBi_AddClient) Send(m *StreamNumList) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calculatorBi_AddClient) Recv() (*StreamAddResponse, error) {
+	m := new(StreamAddResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CalculatorServer is the server API for Calculator service.
 // All implementations must embed UnimplementedCalculatorServer
 // for forward compatibility
@@ -125,6 +158,7 @@ type CalculatorServer interface {
 	Add(context.Context, *AddRequest) (*AddResponse, error)
 	StreamAdd(Calculator_StreamAddServer) error
 	AddStream(*NumList, Calculator_AddStreamServer) error
+	Bi_Add(Calculator_Bi_AddServer) error
 	mustEmbedUnimplementedCalculatorServer()
 }
 
@@ -140,6 +174,9 @@ func (UnimplementedCalculatorServer) StreamAdd(Calculator_StreamAddServer) error
 }
 func (UnimplementedCalculatorServer) AddStream(*NumList, Calculator_AddStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method AddStream not implemented")
+}
+func (UnimplementedCalculatorServer) Bi_Add(Calculator_Bi_AddServer) error {
+	return status.Errorf(codes.Unimplemented, "method Bi_Add not implemented")
 }
 func (UnimplementedCalculatorServer) mustEmbedUnimplementedCalculatorServer() {}
 
@@ -219,6 +256,32 @@ func (x *calculatorAddStreamServer) Send(m *StreamAddResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Calculator_Bi_Add_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalculatorServer).Bi_Add(&calculatorBi_AddServer{stream})
+}
+
+type Calculator_Bi_AddServer interface {
+	Send(*StreamAddResponse) error
+	Recv() (*StreamNumList, error)
+	grpc.ServerStream
+}
+
+type calculatorBi_AddServer struct {
+	grpc.ServerStream
+}
+
+func (x *calculatorBi_AddServer) Send(m *StreamAddResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calculatorBi_AddServer) Recv() (*StreamNumList, error) {
+	m := new(StreamNumList)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Calculator_ServiceDesc is the grpc.ServiceDesc for Calculator service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -241,6 +304,12 @@ var Calculator_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "AddStream",
 			Handler:       _Calculator_AddStream_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "Bi_Add",
+			Handler:       _Calculator_Bi_Add_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/calculator.proto",
